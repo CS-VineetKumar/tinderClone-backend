@@ -2,21 +2,17 @@ const express = require("express");
 
 const app = express();
 
-//Request Handler
-app.use("/hello", (req, res) => {
-  res.send("Hello, World!");
-});
+// Advanced routing example
+// Express 5 and above these are not supported
+// ?, +, * can be added to the route path
+// ? - Matches 0 or 1 of the preceding character
+// + - Matches 1 or more of the preceding character
+// * - Matches 0 or more of the preceding character
+// Example: /ab?c - Matches /abc and /ac
 
-app.get("/user", (req, res) => {
-  res.send({ firstName: "John", lastName: "Doe" });
-});
-
-app.post("/user", (req, res) => {
-  res.send("User created");
-});
-
-app.delete("/user", (req, res) => {
-  res.send("User deleted");
+app.get("/user/:userId", (req, res) => {
+  console.log(req.params);
+  res.send({ firstname: "John", lastname: "Doe" });
 });
 
 app.use("/", (req, res) => {
