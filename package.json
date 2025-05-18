@@ -1,0 +1,29 @@
+{
+  "name": "tinderclone-backend",
+  "version": "1.0.0",
+  "description": "Backend for TinderClone Devs",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon src/App.js",
+    "start": "node src/App.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CS-VineetKumar/tinderClone-backend.git"
+  },
+  "keywords": [
+    "NodeJs",
+    "and",
+    "Javascript"
+  ],
+  "author": "Vineet Kumar",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CS-VineetKumar/tinderClone-backend/issues"
+  },
+  "homepage": "https://github.com/CS-VineetKumar/tinderClone-backend#readme",
+  "dependencies": {
+    "express": "^5.1.0",
+    "nodemon": "^3.1.10"
+  }
+}
