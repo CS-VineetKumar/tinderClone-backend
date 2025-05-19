@@ -2,21 +2,28 @@ const express = require("express");
 
 const app = express();
 
-// Advanced routing example
-// Express 5 and above these are not supported
-// ?, +, * can be added to the route path
-// ? - Matches 0 or 1 of the preceding character
-// + - Matches 1 or more of the preceding character
-// * - Matches 0 or more of the preceding character
-// Example: /ab?c - Matches /abc and /ac
+const { adminAuth, userAuth } = require("./middlewares/auth");
 
-app.get("/user/:userId", (req, res) => {
-  console.log(req.params);
-  res.send({ firstname: "John", lastname: "Doe" });
+// Difference in app.use vs app.all
+// handle Auth Middleware for all admin routes
+app.use("/admin", adminAuth);
+app.use("/user", userAuth);
+
+// Middelware is used so that we don't have to check for Authorization in each of the api call
+app.get("/admin/getAllData", (req, res) => {
+  res.send("All User Data");
 });
 
-app.use("/", (req, res) => {
-  res.send("Hey, hey, hey!");
+app.get("/admin/DeleteUser", (req, res) => {
+  res.send("Delete All User Data");
+});
+
+app.get("/user/getUserData", (req, res) => {
+  res.send("User Data Fetcher");
+});
+
+app.get("/user/DeleteUser", (req, res) => {
+  res.send("Delete User Data");
 });
 
 app.listen(3000, () => {
