@@ -3,19 +3,14 @@ const express = require("express");
 const { connectDB } = require("./config/database");
 const UserModel = require("./models/user");
 
+// Important as this will Middleware will help us use the JSON data in the request body
 const app = express();
 
+app.use(express.json());
+
 app.post("/signup", async (req, res) => {
-  const userObj = {
-    firstName: "Vineet",
-    lastName: "Kumar",
-    email: "vineet.kumar@crownstack.com",
-    password: "vineet123",
-    age: 25,
-    gender: "Male",
-  };
   // creating a new instance of the UserModel
-  const user = new UserModel(userObj);
+  const user = new UserModel(req.body);
   await user.save();
   res.status(200).send("User Created");
 });
