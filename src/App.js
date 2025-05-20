@@ -1,6 +1,10 @@
 const express = require("express");
+const bcrypt = require("bcrypt");
+const validator = require("validator");
 
 const { connectDB } = require("./config/database");
+const { validateSignupData } = require("./utils/validations");
+
 const UserModel = require("./models/user");
 
 // Important as this will Middleware will help us use the JSON data in the request body
@@ -9,10 +13,27 @@ const app = express();
 app.use(express.json());
 
 app.post("/signup", async (req, res) => {
-  // creating a new instance of the UserModel
-  const user = new UserModel(req.body);
-  await user.save();
-  res.status(200).send("User Created");
+  try {
+    // Validate the data
+    validateSignupData(req);
+    const { firstName, lastName, email, password, gender, age } = req.body;
+    //Encrypt the password
+    const passwordHash = await bcrypt.hash(password, 10);
+    console.log("Password Hash: ", passwordHash);
+
+    const user = new UserModel({
+      firstName,
+      lastName,
+      email,
+      password: passwordHash,
+      gender,
+      age,
+    });
+    await user.save();
+    res.status(200).send("User Created");
+  } catch (error) {
+    res.status(400).send("ERROR : " + error.message);
+  }
 });
 
 // Get user by email
@@ -87,6 +108,27 @@ app.patch("/user", async (req, res) => {
     }
   } catch (error) {
     res.status(400).send("UPDATE FAILED : " + error);
+  }
+});
+
+// Login user
+app.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!validator.isEmail(email)) {
+      throw new Error("Invalid credentials");
+    }
+    const user = await UserModel.findOne({ email });
+    if (!user) {
+      throw new Error("Invalid credentials");
+    }
+    const isPasswordMatch = await bcrypt.compare(password, user.password);
+    if (!isPasswordMatch) {
+      return res.status(401).send("Invalid credentials");
+    }
+    res.status(200).send("Login successful");
+  } catch (error) {
+    res.status(400).send("Something went wrong :" + error.message);
   }
 });
 
