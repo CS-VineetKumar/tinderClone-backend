@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const validator = require("validator");
 
 const userSchema = new mongoose.Schema(
   {
@@ -14,6 +15,12 @@ const userSchema = new mongoose.Schema(
       required: true,
       unique: true,
       lowercase: true,
+      trim: true,
+      validate(value) {
+        if (!validator.isEmail(value)) {
+          throw new Error("Email is invalid: " + value);
+        }
+      },
     },
     password: {
       type: String,
@@ -39,6 +46,11 @@ const userSchema = new mongoose.Schema(
     photo: {
       type: String,
       default: "https://www.w3schools.com/howto/img_avatar.png",
+      validate(value) {
+        if (!validator.isURL(value)) {
+          throw new Error("ImageUrl is invalid: " + value);
+        }
+      },
     },
     skills: {
       type: [String],

@@ -56,7 +56,26 @@ app.get("/feed", async (req, res) => {
 app.patch("/user", async (req, res) => {
   const userId = req.body.userId;
   const data = req.body;
+
   try {
+    const ALLOWED_UPDATES = [
+      "userId",
+      "about",
+      "photo",
+      "skills",
+      "password",
+      "age",
+    ];
+
+    const isUpdateAllowed = Object.keys(data).every((k) => {
+      ALLOWED_UPDATES.includes(k);
+    });
+    if (!isUpdateAllowed) {
+      throw new Error("Invalid update");
+    }
+    if (data?.skills?.length > 10) {
+      throw new Error("Skills length should be less than 10");
+    }
     const user = await UserModel.findByIdAndUpdate({ _id: userId }, data, {
       runValidators: true,
       returnDocument: "after",
