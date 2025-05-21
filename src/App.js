@@ -1,6 +1,9 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const validator = require("validator");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
+const { userAuth } = require("./middlewares/auth");
 
 const { connectDB } = require("./config/database");
 const { validateSignupData } = require("./utils/validations");
@@ -11,6 +14,7 @@ const UserModel = require("./models/user");
 const app = express();
 
 app.use(express.json());
+app.use(cookieParser());
 
 app.post("/signup", async (req, res) => {
   try {
@@ -125,10 +129,24 @@ app.post("/login", async (req, res) => {
     const isPasswordMatch = await bcrypt.compare(password, user.password);
     if (!isPasswordMatch) {
       return res.status(401).send("Invalid credentials");
+    } else {
+      // Create JWT token here
+      const token = jwt.sign({ _id: user._id }, "TinderClone@123");
+      // Add cookie here
+      res.cookie("token", token);
+      res.status(200).send("Login successful");
     }
-    res.status(200).send("Login successful");
   } catch (error) {
     res.status(400).send("Something went wrong :" + error.message);
+  }
+});
+
+// Profile API for logged in user
+app.get("/profile", userAuth, async (req, res) => {
+  try {
+    res.status(200).send(req.user);
+  } catch (error) {
+    res.status(400).send("ERROR :" + error.message);
   }
 });
 
