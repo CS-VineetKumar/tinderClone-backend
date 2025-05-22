@@ -8,7 +8,8 @@ const userAuth = async (req, res, next) => {
       throw new Error("Token not valid");
     }
 
-    const decodedObj = await jwt.verify(token, "TinderClone@123");
+    // console.log("🔐 Token received:", token);
+    const decodedObj = jwt.verify(token, "TinderClone@123");
 
     const { _id } = decodedObj;
     const user = await UserModel.findById(_id);

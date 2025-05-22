@@ -126,14 +126,17 @@ app.post("/login", async (req, res) => {
     if (!user) {
       throw new Error("Invalid credentials");
     }
-    const isPasswordMatch = await bcrypt.compare(password, user.password);
+    const isPasswordMatch = await user.validatePassword(password);
     if (!isPasswordMatch) {
       return res.status(401).send("Invalid credentials");
     } else {
       // Create JWT token here
-      const token = jwt.sign({ _id: user._id }, "TinderClone@123");
+      const token = await user.getJWT();
       // Add cookie here
-      res.cookie("token", token);
+      res.cookie("token", token, {
+        expires: new Date(Date.now() + 8 * 3600000),
+        httpOnly: true, // only for local host or without https
+      });
       res.status(200).send("Login successful");
     }
   } catch (error) {
@@ -148,6 +151,13 @@ app.get("/profile", userAuth, async (req, res) => {
   } catch (error) {
     res.status(400).send("ERROR :" + error.message);
   }
+});
+
+app.post("/sendRequest", userAuth, async (req, res) => {
+  const user = req.user;
+  console.log("Send request");
+
+  res.status(200).send(user.firstName + " sent the request");
 });
 
 connectDB()
