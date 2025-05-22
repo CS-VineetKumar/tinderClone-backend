@@ -6,8 +6,8 @@
 - POST /login
 
 ## Profile Router
-- GET /profile
-- PATCH /profile
+- GET /profile/view
+- PATCH /profile/edit
 - PATCH /profile/password
 
 ## Connection Request Router
