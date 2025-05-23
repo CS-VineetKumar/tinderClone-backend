@@ -16,7 +16,7 @@ app.use(cookieParser());
 
 app.use("/", authRouter);
 app.use("/profile", profileRouter);
-app.use("/requests", requestsRouter);
+app.use("/request", requestsRouter);
 
 app.get("/feed", async (req, res) => {
   try {
