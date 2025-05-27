@@ -1,16 +1,23 @@
 const moongoose = require("mongoose");
+const UserModel = require("../models/user");
 
 const connectionRequestSchema = new moongoose.Schema(
   {
     fromUserId: {
       type: moongoose.Schema.Types.ObjectId,
-      ref: "User",
+      ref: "User", // reference to the User collection
       required: true,
     },
     toUserId: {
       type: moongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+    fromUserName: {
+      type: String,
+    },
+    toUserName: {
+      type: String,
     },
     status: {
       type: String,
@@ -23,28 +30,27 @@ const connectionRequestSchema = new moongoose.Schema(
   { timestamps: true }
 );
 
-connectionRequestSchema.pre("save", async function () {
+connectionRequestSchema.pre("save", async function (next) {
   const connectionRequest = this;
   // Check if fromUser is same as toUser
   if (connectionRequest.fromUserId.equals(connectionRequest.toUserId)) {
     throw new Error("You cannot send a connection request to yourself");
   }
+  // Add the userName to schema and DB
+  if (!this.fromUserName || !this.toUserName) {
+    const [fromUser, toUser] = await Promise.all([
+      UserModel.findById(this.fromUserId).select("firstName"),
+      UserModel.findById(this.toUserId).select("firstName"),
+    ]);
+
+    if (!fromUser || !toUser) {
+      throw new Error("User not found when putting usernames.");
+    }
+
+    this.fromUserName = fromUser.firstName;
+    this.toUserName = toUser.firstName;
+  }
   next();
-  // Check if the connection request already exists
-  // const existingRequest = await ConnectionRequestModel.findOne({
-  //     $or: [
-  //         { fromUserId: connectionRequest.fromUserId, toUserId: connectionRequest.toUserId },
-  //         { fromUserId: connectionRequest.toUserId, toUserId: connectionRequest.fromUserId },
-  //     ],
-  // });
-  // if (existingRequest) {
-  //     throw new Error("Connection request already exists");
-  // }
-  // // Check if the status is valid
-  // const allowedStatuses = ["ignore", "accepted", "rejected", "interested"];
-  // if (!allowedStatuses.includes(connectionRequest.status)) {
-  //     throw new Error("Invalid status");
-  // }
 });
 
 connectionRequestSchema.index({ fromUserId: 1, toUserId: 1 });

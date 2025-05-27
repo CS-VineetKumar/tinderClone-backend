@@ -9,7 +9,8 @@ const app = express();
 
 const authRouter = require("./Routes/authRouter");
 const profileRouter = require("./Routes/profileRouter");
-const requestsRouter = require("./Routes/requests");
+const requestsRouter = require("./Routes/requestsRouter");
+const userRouter = require("./Routes/userRouter");
 
 app.use(express.json());
 app.use(cookieParser());
@@ -17,15 +18,7 @@ app.use(cookieParser());
 app.use("/", authRouter);
 app.use("/profile", profileRouter);
 app.use("/request", requestsRouter);
-
-app.get("/feed", async (req, res) => {
-  try {
-    const users = await UserModel.find({});
-    res.status(200).send(users);
-  } catch (error) {
-    res.status(400).send("Something went wrong");
-  }
-});
+app.use("/user", userRouter);
 
 connectDB()
   .then(() => {
