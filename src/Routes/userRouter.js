@@ -10,20 +10,44 @@ const USER_SAFE_DATA = "firstName lastName age photo about";
 userRouter.get("/feed", userAuth, async (req, res) => {
   try {
     const loggedInUser = req.user;
+    const page = parseInt(req.query.page) || 1;
+    let limit = parseInt(req.query.limit);
+    limit = limit > 50 ? 50 : limit;
+    const skip = (page - 1) * limit;
+
+    // Match opposite gender or use default preference logic
     let genderFind = "";
-    if (loggedInUser.gender == "male") {
-      genderFind = "female";
-    } else if (loggedInUser.gender == "female") {
-      genderFind = "male";
-    } else {
-      genderFind = "others";
+    if (loggedInUser.gender === "male") genderFind = "female";
+    else if (loggedInUser.gender === "female") genderFind = "male";
+    else genderFind = "others";
+
+    // Step 1: Get all userIds involved in connection requests with the current user
+    const connectionRequests = await ConnectionRequestModel.find({
+      $or: [{ fromUserId: loggedInUser._id }, { toUserId: loggedInUser._id }],
+    }).select("fromUserId toUserId");
+
+    // Step 2: Extract all userIds to hide (both sender and receiver IDs)
+    const excludedUserIds = new Set([loggedInUser._id.toString()]);
+
+    for (const req of connectionRequests) {
+      excludedUserIds.add(req.fromUserId.toString());
+      excludedUserIds.add(req.toUserId.toString());
     }
-    const users = await UserModel.find({ gender: genderFind })
-      .limit(10)
-      .select("firstName lastName age photo about");
-    res.status(200).send(users);
+
+    // Step 3: Query for visible users
+    const users = await UserModel.find({
+      _id: { $nin: Array.from(excludedUserIds) },
+      gender: genderFind,
+    })
+      .select("firstName lastName age photo gender about")
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    return res.status(200).json(users);
   } catch (error) {
-    res.status(400).send("Something went wrong");
+    console.error("Feed error:", error);
+    return res.status(500).send("Something went wrong");
   }
 });
 
