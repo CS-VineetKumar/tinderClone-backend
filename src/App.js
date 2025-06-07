@@ -1,8 +1,7 @@
 const express = require("express");
 const cookieParser = require("cookie-parser");
 const { connectDB } = require("./config/database");
-
-const UserModel = require("./models/user");
+const cors = require("cors");
 
 // Important as this will Middleware will help us use the JSON data in the request body
 const app = express();
@@ -12,6 +11,12 @@ const profileRouter = require("./Routes/profileRouter");
 const requestsRouter = require("./Routes/requestsRouter");
 const userRouter = require("./Routes/userRouter");
 
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 

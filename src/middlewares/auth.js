@@ -5,11 +5,11 @@ const userAuth = async (req, res, next) => {
   try {
     const { token } = req.cookies;
     if (!token) {
-      throw new Error("Token not valid");
+      return res.status(401).send("Please Login!");
     }
 
     // console.log("🔐 Token received:", token);
-    const decodedObj = jwt.verify(token, "TinderClone@123");
+    const decodedObj = await jwt.verify(token, "TinderClone@123");
 
     const { _id } = decodedObj;
     const user = await UserModel.findById(_id);

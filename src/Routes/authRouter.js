@@ -10,7 +10,8 @@ authRouter.post("/signup", async (req, res) => {
   try {
     // Validate the data
     validateSignupData(req);
-    const { firstName, lastName, email, password, gender, age } = req.body;
+    const { firstName, lastName, email, password } = req.body;
+
     //Encrypt the password
     const passwordHash = await bcrypt.hash(password, 10);
 
@@ -19,11 +20,9 @@ authRouter.post("/signup", async (req, res) => {
       lastName,
       email,
       password: passwordHash,
-      gender,
-      age,
     });
     await user.save();
-    res.status(200).send("User Created");
+    res.status(200).send({ user: user });
   } catch (error) {
     res.status(400).send("ERROR : " + error.message);
   }
@@ -51,7 +50,7 @@ authRouter.post("/login", async (req, res) => {
         expires: new Date(Date.now() + 8 * 3600000),
         httpOnly: true, // only for local host or without https
       });
-      res.status(200).send("Login successful");
+      res.status(200).send({ user: user });
     }
   } catch (error) {
     res.status(400).send("Something went wrong :" + error.message);

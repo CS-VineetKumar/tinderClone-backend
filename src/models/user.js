@@ -31,11 +31,11 @@ const userSchema = new mongoose.Schema(
     },
     age: {
       type: Number,
-      required: true,
+      // required: true,
     },
     gender: {
       type: String,
-      required: true,
+      // required: true,
       enum: {
         values: ["male", "female", "others"],
         message: "{VALUE} is not supported",
