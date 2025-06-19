@@ -1,4 +1,4 @@
-const mysql = require("mysql2/promise");
+import mysql from 'mysql2/promise';
 
 const pool = mysql.createPool({
   host: "database-1.c5ye0misqfyx.eu-north-1.rds.amazonaws.com",
@@ -10,4 +10,4 @@ const pool = mysql.createPool({
   queueLimit: 0,
 });
 
-module.exports = pool;
+export default pool; 

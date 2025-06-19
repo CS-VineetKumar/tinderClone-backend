@@ -1,10 +1,10 @@
-const mongoose = require("mongoose");
-const validator = require("validator");
+import mongoose, { Schema, Document } from 'mongoose';
+import validator from 'validator';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import { IUser } from '../types';
 
-const bcrypt = require("bcrypt");
-const jwt = require("jsonwebtoken");
-
-const userSchema = new mongoose.Schema(
+const userSchema = new Schema<IUser>(
   {
     firstName: {
       type: String,
@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      validate(value) {
+      validate(value: string) {
         if (!validator.isEmail(value)) {
           throw new Error("Email is invalid: " + value);
         }
@@ -40,7 +40,7 @@ const userSchema = new mongoose.Schema(
         values: ["male", "female", "others"],
         message: "{VALUE} is not supported",
       },
-      validate(value) {
+      validate(value: string) {
         if (!["male", "female", "others"].includes(value)) {
           throw new Error("Gender data is invalid");
         }
@@ -53,7 +53,7 @@ const userSchema = new mongoose.Schema(
     photo: {
       type: String,
       default: "https://www.w3schools.com/howto/img_avatar.png",
-      validate(value) {
+      validate(value: string) {
         if (!validator.isURL(value)) {
           throw new Error("ImageUrl is invalid: " + value);
         }
@@ -69,7 +69,7 @@ const userSchema = new mongoose.Schema(
   }
 );
 
-userSchema.methods.getJWT = async function () {
+userSchema.methods.getJWT = async function (): Promise<string> {
   // Never use arrow function here
   const token = jwt.sign({ _id: this._id }, "TinderClone@123", {
     expiresIn: "1h",
@@ -77,13 +77,13 @@ userSchema.methods.getJWT = async function () {
   return token;
 };
 
-userSchema.methods.validatePassword = async function (passwordInput) {
+userSchema.methods.validatePassword = async function (passwordInput: string): Promise<boolean> {
   const user = this;
   const isPasswordMatch = await bcrypt.compare(passwordInput, user.password);
 
   return isPasswordMatch;
 };
 
-const UserModel = mongoose.model("User", userSchema);
+const UserModel = mongoose.model<IUser>("User", userSchema);
 
-module.exports = UserModel;
+export default UserModel; 
