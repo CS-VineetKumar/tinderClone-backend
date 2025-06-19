@@ -1,17 +1,18 @@
-const express = require("express");
-const userRouter = express.Router();
-const { userAuth } = require("../middlewares/auth");
+import express, { Response } from 'express';
+import { userAuth } from '../middlewares/auth';
+import ConnectionRequestModel from '../models/connectionRequest';
+import UserModel from '../models/user';
+import { AuthenticatedRequest, IConnectionRequest } from '../types';
 
-const ConnectionRequestModel = require("../models/connectionRequest");
-const UserModel = require("../models/user");
+const userRouter = express.Router();
 
 const USER_SAFE_DATA = "firstName lastName age photo about";
 
-userRouter.get("/feed", userAuth, async (req, res) => {
+userRouter.get("/feed", userAuth, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const loggedInUser = req.user;
-    const page = parseInt(req.query.page) || 1;
-    let limit = parseInt(req.query.limit);
+    const loggedInUser = req.user!;
+    const page = parseInt(req.query.page as string) || 1;
+    let limit = parseInt(req.query.limit as string);
     limit = limit > 50 ? 50 : limit;
     const skip = (page - 1) * limit;
 
@@ -29,9 +30,9 @@ userRouter.get("/feed", userAuth, async (req, res) => {
     // Step 2: Extract all userIds to hide (both sender and receiver IDs)
     const excludedUserIds = new Set([loggedInUser._id.toString()]);
 
-    for (const req of connectionRequests) {
-      excludedUserIds.add(req.fromUserId.toString());
-      excludedUserIds.add(req.toUserId.toString());
+    for (const connectionReq of connectionRequests) {
+      excludedUserIds.add((connectionReq as IConnectionRequest).fromUserId.toString());
+      excludedUserIds.add((connectionReq as IConnectionRequest).toUserId.toString());
     }
 
     // Step 3: Query for visible users
@@ -44,16 +45,16 @@ userRouter.get("/feed", userAuth, async (req, res) => {
       .limit(limit)
       .lean();
 
-    return res.status(200).json(users);
+    res.status(200).json(users);
   } catch (error) {
     console.error("Feed error:", error);
-    return res.status(500).send("Something went wrong");
+    res.status(500).send("Something went wrong");
   }
 });
 
-userRouter.get("/request", userAuth, async (req, res) => {
+userRouter.get("/request", userAuth, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const loggedInUser = req.user;
+    const loggedInUser = req.user!;
 
     const connectionRequest = await ConnectionRequestModel.find({
       toUserId: loggedInUser._id,
@@ -61,19 +62,20 @@ userRouter.get("/request", userAuth, async (req, res) => {
     });
     // .populate("fromUserId",["firstName","lastName"])  string separated by space will also work
     if (!connectionRequest) {
-      return res.status(404).json({ message: "No connection request" });
+      res.status(404).json({ message: "No connection request" });
+      return;
     }
-    return res
+    res
       .status(201)
       .json({ message: "Incoming Request found!!", data: connectionRequest });
   } catch (error) {
-    return res.status(400).send("ERROR : " + error.message);
+    res.status(400).send("ERROR : " + (error as Error).message);
   }
 });
 
-userRouter.get("/connections", userAuth, async (req, res) => {
+userRouter.get("/connections", userAuth, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const loggedInUser = req.user;
+    const loggedInUser = req.user!;
 
     const connectionRequest = await ConnectionRequestModel.find({
       $or: [
@@ -84,21 +86,23 @@ userRouter.get("/connections", userAuth, async (req, res) => {
       .populate("fromUserId", USER_SAFE_DATA)
       .populate("toUserId", USER_SAFE_DATA);
     if (!connectionRequest) {
-      return res.status(404).json({ message: "No connections" });
+      res.status(404).json({ message: "No connections" });
+      return;
     }
 
     const data = connectionRequest.map((row) => {
-      if (row.fromUserId.firstName === loggedInUser.firstName) {
-        return row.toUserId;
+      const typedRow = row as IConnectionRequest & { fromUserId: any; toUserId: any };
+      if (typedRow.fromUserId.firstName === loggedInUser.firstName) {
+        return typedRow.toUserId;
       }
-      return row.fromUserId;
+      return typedRow.fromUserId;
     });
-    return res
+    res
       .status(200)
       .json({ message: "Connection data fetched", data: data });
   } catch (error) {
-    return res.status(400).send("ERROR : " + error.message);
+    res.status(400).send("ERROR : " + (error as Error).message);
   }
 });
 
-module.exports = userRouter;
+export default userRouter; 
