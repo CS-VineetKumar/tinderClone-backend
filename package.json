@@ -5,9 +5,20 @@
   "main": "dist/App.js",
   "scripts": {
     "build": "tsc",
-    "dev": "nodemon --exec ts-node src/App.ts",
-    "start": "node dist/App.js",
-    "clean": "rm -rf dist"
+    "dev": "NODE_ENV=development nodemon --exec ts-node src/App.ts",
+    "dev:staging": "NODE_ENV=staging nodemon --exec ts-node src/App.ts",
+    "dev:prod": "NODE_ENV=production nodemon --exec ts-node src/App.ts",
+    "start": "NODE_ENV=production node dist/App.js",
+    "start:staging": "NODE_ENV=staging node dist/App.js",
+    "start:dev": "NODE_ENV=development node dist/App.js",
+    "clean": "rm -rf dist",
+    "setup:local-db": "NODE_ENV=development node scripts/setupLocalDB.js",
+    "sync:db:pull": "NODE_ENV=development node scripts/syncDatabase.js pull",
+    "sync:db:push": "NODE_ENV=development node scripts/syncDatabase.js push",
+    "db:reset": "npm run setup:local-db",
+    "build:dev": "NODE_ENV=development npm run build",
+    "build:staging": "NODE_ENV=staging npm run build",
+    "build:prod": "NODE_ENV=production npm run build"
   },
   "repository": {
     "type": "git",

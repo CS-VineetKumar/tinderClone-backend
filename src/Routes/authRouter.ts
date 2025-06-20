@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import validator from 'validator';
 import { validateSignupData } from '../utils/validations';
 import UserModel from '../models/user';
+import config from '../config/environment';
 import { SignupData, LoginData } from '../types';
 
 const authRouter = express.Router();
@@ -48,12 +49,8 @@ authRouter.post("/login", async (req: Request, res: Response): Promise<void> => 
       // Create JWT token here
       const token = await user.getJWT();
       // Add cookie here
-      const cookieExpiresHours = process.env.COOKIE_EXPIRES_HOURS;
-      if (!cookieExpiresHours) {
-        throw new Error('COOKIE_EXPIRES_HOURS environment variable is required');
-      }
       res.cookie("token", token, {
-        expires: new Date(Date.now() + parseInt(cookieExpiresHours) * 3600000),
+        expires: new Date(Date.now() + config.cookieExpiresHours * 3600000),
         httpOnly: true, // only for local host or without https
       });
       res.status(200).send({ user: user });

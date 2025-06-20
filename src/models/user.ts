@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 import validator from 'validator';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import config from '../config/environment';
 import { IUser } from '../types';
 
 const userSchema = new Schema<IUser>(
@@ -48,11 +49,11 @@ const userSchema = new Schema<IUser>(
     },
     about: {
       type: String,
-      default: "The default about for the user",
+      default: config.defaultUserAbout,
     },
     photo: {
       type: String,
-      default: process.env.DEFAULT_USER_PHOTO,
+      default: config.defaultUserPhoto,
       validate(value: string) {
         if (!validator.isURL(value)) {
           throw new Error("ImageUrl is invalid: " + value);
@@ -71,18 +72,8 @@ const userSchema = new Schema<IUser>(
 
 userSchema.methods.getJWT = async function (): Promise<string> {
   // Never use arrow function here
-  const jwtSecret = process.env.JWT_SECRET;
-  const jwtExpiresIn = process.env.JWT_EXPIRES_IN;
-  
-  if (!jwtSecret) {
-    throw new Error('JWT_SECRET environment variable is required');
-  }
-  if (!jwtExpiresIn) {
-    throw new Error('JWT_EXPIRES_IN environment variable is required');
-  }
-  
-  const token = jwt.sign({ _id: this._id }, jwtSecret, {
-    expiresIn: jwtExpiresIn,
+  const token = jwt.sign({ _id: this._id }, config.jwtSecret, {
+    expiresIn: config.jwtExpiresIn,
   } as any);
   return token;
 };
