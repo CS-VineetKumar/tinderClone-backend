@@ -12,7 +12,11 @@ const userAuth = async (req: AuthenticatedRequest, res: Response, next: NextFunc
     }
 
     // console.log("🔐 Token received:", token);
-    const decodedObj = await jwt.verify(token, "TinderClone@123") as JwtPayload;
+    const jwtSecret = process.env.JWT_SECRET;
+    if (!jwtSecret) {
+      throw new Error('JWT_SECRET environment variable is not defined');
+    }
+    const decodedObj = await jwt.verify(token, jwtSecret) as JwtPayload;
 
     const { _id } = decodedObj;
     const user = await UserModel.findById(_id);
