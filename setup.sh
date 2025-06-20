@@ -1,7 +1,6 @@
 #!/bin/bash
 
-echo "🚀 TinderClone Backend Setup Script"
-echo "=================================="
+echo "🚀 Setting up TinderClone Backend for team development..."
 
 # Check if Node.js is installed
 if ! command -v node &> /dev/null; then
@@ -17,51 +16,75 @@ fi
 
 echo "✅ Node.js and npm are installed"
 
-# Check if MySQL is installed
-if ! command -v mysql &> /dev/null; then
-    echo "⚠️  MySQL is not installed. Please install MySQL first."
-    echo "📖 See TEAM_SETUP.md for installation instructions"
-    echo "   macOS: brew install mysql"
-    echo "   Linux: sudo apt install mysql-server"
-    echo "   Windows: Download from mysql.com"
-    exit 1
-fi
-
-echo "✅ MySQL is installed"
-
 # Install dependencies
 echo "📦 Installing dependencies..."
 npm install
 
-# Check if .env file exists
-if [ ! -f .env ]; then
-    echo "⚠️  .env file not found!"
-    echo "📝 Creating .env from template..."
-    cp .env.example .env
-    echo "🔧 Please update the .env file with your database credentials"
-    echo "📖 See TEAM_SETUP.md for detailed instructions"
+# Create environment files if they don't exist
+echo "🔧 Setting up environment files..."
+
+if [ ! -f ".env.development" ]; then
+    echo "📝 Creating .env.development from example..."
+    if [ -f "env-examples/development.env.example" ]; then
+        cp env-examples/development.env.example .env.development
+        echo "✅ .env.development created"
+        echo "⚠️  Please update .env.development with your local MySQL credentials"
+    else
+        echo "⚠️  env-examples/development.env.example not found"
+    fi
 else
-    echo "✅ .env file found"
+    echo "✅ .env.development already exists"
 fi
 
-# Ask if user wants to setup local database
-echo ""
-read -p "🤔 Do you want to setup the local database now? (y/n): " -n 1 -r
-echo ""
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-    echo "🏗️  Setting up local database..."
-    npm run setup:local-db
+if [ ! -f ".env.staging" ]; then
+    echo "📝 Creating .env.staging from example..."
+    if [ -f "env-examples/staging.env.example" ]; then
+        cp env-examples/staging.env.example .env.staging
+        echo "✅ .env.staging created"
+        echo "⚠️  Please update .env.staging with your RDS credentials (get from team lead)"
+    else
+        echo "⚠️  env-examples/staging.env.example not found"
+    fi
+else
+    echo "✅ .env.staging already exists"
 fi
 
+if [ ! -f ".env.production" ]; then
+    echo "📝 Creating .env.production from example..."
+    if [ -f "env-examples/production.env.example" ]; then
+        cp env-examples/production.env.example .env.production
+        echo "✅ .env.production created"
+        echo "⚠️  Please update .env.production with your RDS credentials (get from team lead)"
+    else
+        echo "⚠️  env-examples/production.env.example not found"
+    fi
+else
+    echo "✅ .env.production already exists"
+fi
+
+# Check if MySQL is installed
+echo "🗄️  Checking MySQL installation..."
+if command -v mysql &> /dev/null; then
+    echo "✅ MySQL is installed"
+else
+    echo "⚠️  MySQL is not installed. Please install MySQL:"
+    echo "   macOS: brew install mysql"
+    echo "   Linux: sudo apt install mysql-server"
+    echo "   Windows: Download from mysql.com"
+fi
+
+# Setup local database
+echo "🗄️  Setting up local database..."
+npm run setup:local-db
+
 echo ""
-echo "🎉 Setup complete!"
-echo "📖 Next steps:"
-echo "   1. Update .env file with database credentials"
-echo "   2. Run 'npm run dev' to start the server"
-echo "   3. Check TEAM_SETUP.md for troubleshooting"
+echo "🎉 Setup completed!"
 echo ""
-echo "🗄️  Database commands:"
-echo "   npm run setup:local-db  - Setup local database"
-echo "   npm run sync:db:pull    - Pull data from RDS"
-echo "   npm run sync:db:push    - Push data to RDS"
-echo "   npm run db:reset        - Reset local database" 
+echo "📋 Next steps:"
+echo "1. Update .env.development with your local MySQL credentials"
+echo "2. Update .env.staging with RDS credentials (get from team lead)"
+echo "3. Update .env.production with RDS credentials (get from team lead)"
+echo "4. Start development: npm run dev"
+echo ""
+echo "📖 Read TEAM_SETUP.md for detailed instructions"
+echo "" 

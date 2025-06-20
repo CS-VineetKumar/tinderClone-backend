@@ -1,8 +1,8 @@
 import express, { Response } from 'express';
 import { userAuth } from '../middlewares/auth';
-import ConnectionRequestModel from '../models/connectionRequest';
+import ConnectionRequestModel from '../models/connectionRequestSQL';
 import UserModel from '../models/userSQL';
-import { AuthenticatedRequest, IConnectionRequest } from '../types';
+import { AuthenticatedRequest } from '../types';
 
 const userRouter = express.Router();
 
@@ -22,20 +22,17 @@ userRouter.get("/feed", userAuth, async (req: AuthenticatedRequest, res: Respons
     else if (loggedInUser.gender === "female") genderFind = "male";
     else genderFind = "others";
 
-    // Step 1: Get all userIds involved in connection requests with the current user
-    const connectionRequests = await ConnectionRequestModel.find({
-      $or: [{ fromUserId: loggedInUser.id }, { toUserId: loggedInUser.id }],
-    }).select("fromUserId toUserId");
+    // Get all userIds involved in connection requests with the current user
+    const connectionRequests = await ConnectionRequestModel.getRequestsForUser(loggedInUser.id);
 
-    // Step 2: Extract all userIds to hide (both sender and receiver IDs)
+    // Extract all userIds to hide (both sender and receiver IDs)
     const excludedUserIds = [loggedInUser.id];
-
     for (const connectionReq of connectionRequests) {
-      excludedUserIds.push((connectionReq as IConnectionRequest).fromUserId);
-      excludedUserIds.push((connectionReq as IConnectionRequest).toUserId);
+      excludedUserIds.push(connectionReq.fromUserId);
+      excludedUserIds.push(connectionReq.toUserId);
     }
 
-    // Step 3: Query for visible users using SQL
+    // Query for visible users using SQL
     const users = await UserModel.findByGender(genderFind, excludedUserIds, limit, skip);
 
     res.status(200).json(users);
@@ -49,18 +46,37 @@ userRouter.get("/request", userAuth, async (req: AuthenticatedRequest, res: Resp
   try {
     const loggedInUser = req.user!;
 
-    const connectionRequest = await ConnectionRequestModel.find({
+    // Get incoming requests (where loggedInUser is the recipient)
+    const connectionRequests = await ConnectionRequestModel.find({
       toUserId: loggedInUser.id,
-      status: "interested",
+      status: "interested"
     });
-    // .populate("fromUserId",["firstName","lastName"])  string separated by space will also work
-    if (!connectionRequest) {
+
+    if (connectionRequests.length === 0) {
       res.status(404).json({ message: "No connection request" });
       return;
     }
-    res
-      .status(201)
-      .json({ message: "Incoming Request found!!", data: connectionRequest });
+
+    // Get sender details for each request
+    const requestsWithUserDetails = await Promise.all(
+      connectionRequests.map(async (request) => {
+        const fromUser = await UserModel.findById(request.fromUserId);
+        return {
+          ...request,
+          fromUser: fromUser ? {
+            id: fromUser.id,
+            firstName: fromUser.firstName,
+            lastName: fromUser.lastName,
+            photo: fromUser.photo
+          } : null
+        };
+      })
+    );
+
+    res.status(201).json({ 
+      message: "Incoming Request found!!", 
+      data: requestsWithUserDetails 
+    });
   } catch (error) {
     res.status(400).send("ERROR : " + (error as Error).message);
   }
@@ -70,29 +86,42 @@ userRouter.get("/connections", userAuth, async (req: AuthenticatedRequest, res: 
   try {
     const loggedInUser = req.user!;
 
-    const connectionRequest = await ConnectionRequestModel.find({
-      $or: [
-        { fromUserId: loggedInUser.id, status: "accepted" },
-        { toUserId: loggedInUser.id, status: "accepted" },
-      ],
-    })
-      .populate("fromUserId", USER_SAFE_DATA)
-      .populate("toUserId", USER_SAFE_DATA);
-    if (!connectionRequest) {
+    // Get accepted connections
+    const acceptedConnections = await ConnectionRequestModel.getAcceptedConnections(loggedInUser.id);
+
+    if (acceptedConnections.length === 0) {
       res.status(404).json({ message: "No connections" });
       return;
     }
 
-    const data = connectionRequest.map((row) => {
-      const typedRow = row as IConnectionRequest & { fromUserId: any; toUserId: any };
-      if (typedRow.fromUserId.firstName === loggedInUser.firstName) {
-        return typedRow.toUserId;
-      }
-      return typedRow.fromUserId;
+    // Get user details for each connection
+    const connectionsWithUserDetails = await Promise.all(
+      acceptedConnections.map(async (connection) => {
+        const otherUserId = connection.fromUserId === loggedInUser.id 
+          ? connection.toUserId 
+          : connection.fromUserId;
+        
+        const otherUser = await UserModel.findById(otherUserId);
+        
+        return otherUser ? {
+          id: otherUser.id,
+          firstName: otherUser.firstName,
+          lastName: otherUser.lastName,
+          photo: otherUser.photo,
+          about: otherUser.about,
+          age: otherUser.age,
+          gender: otherUser.gender
+        } : null;
+      })
+    );
+
+    // Filter out null values
+    const validConnections = connectionsWithUserDetails.filter(user => user !== null);
+
+    res.status(200).json({ 
+      message: "Connection data fetched", 
+      data: validConnections 
     });
-    res
-      .status(200)
-      .json({ message: "Connection data fetched", data: data });
   } catch (error) {
     res.status(400).send("ERROR : " + (error as Error).message);
   }

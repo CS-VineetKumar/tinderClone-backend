@@ -1,6 +1,31 @@
 # TinderClone Backend
 
-A Node.js/TypeScript backend for the TinderClone application with three-environment setup (Development, Staging, Production).
+A Node.js/TypeScript backend for the TinderClone application with three-environment setup (Development, Staging, Production) and team-friendly hybrid database architecture.
+
+## 🏗️ Team Architecture
+
+This project uses a **hybrid database approach** for optimal team collaboration:
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Developer 1   │    │   Developer 2   │    │   Developer 3   │
+│  Local MySQL    │    │  Local MySQL    │    │  Local MySQL    │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       │
+         └───────────────────────┼───────────────────────┘
+                                 │
+                    ┌─────────────────┐
+                    │   Shared RDS    │
+                    │  (Staging/Prod) │
+                    └─────────────────┘
+```
+
+### **Benefits:**
+- ⚡ **Fast Development**: Each developer works with local MySQL (no network latency)
+- 🔒 **Safe Testing**: Can't break team data during development
+- 💰 **Cost Effective**: No RDS charges during development
+- 🌐 **Offline Work**: No internet required for development
+- 🧪 **Proper Testing**: Staging environment for pre-production testing
 
 ## 🚀 Quick Start
 
@@ -33,6 +58,9 @@ npm run dev
 ```bash
 brew install mysql
 brew services start mysql
+
+# Optional: Install MySQL Workbench for GUI database management
+brew install --cask mysqlworkbench
 ```
 
 **Windows:**

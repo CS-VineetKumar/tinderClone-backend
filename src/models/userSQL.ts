@@ -126,15 +126,24 @@ class UserModel {
       let query = 'SELECT * FROM users WHERE gender = ?';
       const params: any[] = [gender];
 
-      if (excludeIds.length > 0) {
-        query += ' AND id NOT IN (' + excludeIds.map(() => '?').join(',') + ')';
-        params.push(...excludeIds);
+      if (excludeIds.length === 1) {
+        // For single excluded ID, use != instead of NOT IN
+        query += ' AND id != ?';
+        params.push(Number(excludeIds[0]));
+      } else if (excludeIds.length > 1) {
+        // For multiple excluded IDs, use NOT IN
+        const placeholders = excludeIds.map(() => '?').join(',');
+        query += ` AND id NOT IN (${placeholders})`;
+        params.push(...excludeIds.map(id => Number(id)));
       }
 
       query += ' ORDER BY createdAt DESC LIMIT ? OFFSET ?';
-      params.push(limit, skip);
+      params.push(Number(limit), Number(skip));
 
-      const [rows] = await connection.execute(query, params);
+      console.log('🔍 SQL Query:', query);
+      console.log('🔍 SQL Params:', params);
+
+      const [rows] = await connection.query(query, params);
       const users = rows as IUser[];
 
       return users.map(user => ({

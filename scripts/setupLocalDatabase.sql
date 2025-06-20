@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255) NOT NULL,
     age INT,
     gender ENUM('male', 'female', 'others'),
-    about TEXT DEFAULT 'The default about for the user',
+    about TEXT,
     photo VARCHAR(500) DEFAULT 'https://www.w3schools.com/howto/img_avatar.png',
     skills JSON,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

@@ -1,3 +1,11 @@
+/**
+ * @deprecated This MongoDB connection request model is deprecated.
+ * Use SQL-based connection request management instead.
+ * This file will be removed in a future update.
+ */
+
+// MongoDB Connection Request Model - commented out
+/*
 import mongoose, { Schema, Document } from 'mongoose';
 import UserModel from './user';
 import { IConnectionRequest, IUser } from '../types';
@@ -60,5 +68,15 @@ const ConnectionRequestModel = mongoose.model<IConnectionRequest>(
   "ConnectionRequest",
   connectionRequestSchema
 );
+
+export default ConnectionRequestModel;
+*/
+
+// Temporary placeholder - will be replaced with SQL implementation
+const ConnectionRequestModel = {
+  find: () => Promise.resolve([]),
+  findOne: () => Promise.resolve(null),
+  create: () => Promise.resolve({}),
+};
 
 export default ConnectionRequestModel; 
