@@ -1,8 +1,7 @@
 import { Request } from 'express';
-import { Document, Types } from 'mongoose';
 
-export interface IUser extends Document {
-  _id: Types.ObjectId;
+export interface IUser {
+  id: number;
   firstName: string;
   lastName?: string;
   email: string;
@@ -12,16 +11,14 @@ export interface IUser extends Document {
   about?: string;
   photo?: string;
   skills?: string[];
-  getJWT(): Promise<string>;
-  validatePassword(passwordInput: string): Promise<boolean>;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export interface IConnectionRequest extends Document {
-  _id: Types.ObjectId;
-  fromUserId: Types.ObjectId;
-  toUserId: Types.ObjectId;
+export interface IConnectionRequest {
+  id: number;
+  fromUserId: number;
+  toUserId: number;
   fromUserName?: string;
   toUserName?: string;
   status: 'ignore' | 'accepted' | 'rejected' | 'interested';
@@ -70,7 +67,7 @@ export interface PasswordUpdateData {
 }
 
 export interface JwtPayload {
-  _id: string;
+  _id: number;
   iat?: number;
   exp?: number;
 } 

@@ -1,6 +1,7 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
-import { connectDB } from './config/database';
+// import { connectDB } from './config/database'; // MongoDB - commented out
+import pool from './config/mysql';
 import cors from 'cors';
 import config from './config/environment';
 
@@ -26,13 +27,27 @@ app.use("/profile", profileRouter);
 app.use("/request", requestsRouter);
 app.use("/user", userRouter);
 
-connectDB()
-  .then(() => {
-    console.log("MongoDB connected...");
+// MongoDB connection - commented out
+// connectDB()
+//   .then(() => {
+//     console.log("MongoDB connected...");
+//     app.listen(config.port, () => {
+//       console.log(`Server is running on port ${config.port} in ${config.nodeEnv} mode`);
+//     });
+//   })
+//   .catch((err) => {
+//     console.log("MongoDB connection error: ", err);
+//   });
+
+// SQL Database connection
+pool.getConnection()
+  .then((connection) => {
+    console.log("SQL Database connected...");
+    connection.release();
     app.listen(config.port, () => {
       console.log(`Server is running on port ${config.port} in ${config.nodeEnv} mode`);
     });
   })
   .catch((err) => {
-    console.log("MongoDB connection error: ", err);
+    console.log("SQL Database connection error: ", err);
   }); 

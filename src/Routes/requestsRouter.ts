@@ -1,15 +1,15 @@
 import express, { Response } from 'express';
 import { userAuth } from '../middlewares/auth';
 import ConnectionRequestModel from '../models/connectionRequest';
-import UserModel from '../models/user';
+import UserModel from '../models/userSQL';
 import { AuthenticatedRequest } from '../types';
 
 const requestsRouter = express.Router();
 
 requestsRouter.post("/send/:status/:toUserId", userAuth, async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const fromUser = req.user!._id;
-    const toUserId = req.params.toUserId;
+    const fromUser = req.user!.id;
+    const toUserId = parseInt(req.params.toUserId);
     const status = req.params.status;
 
     const allowedStatuses = ["ignore", "interested"];
@@ -70,7 +70,7 @@ requestsRouter.post(
       }
       const connectionRequest = await ConnectionRequestModel.findOne({
         _id: requestId,
-        toUserId: loggedInUser._id,
+        toUserId: loggedInUser.id,
         status: "interested",
       });
       if (!connectionRequest) {

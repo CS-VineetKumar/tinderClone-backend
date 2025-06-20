@@ -2,7 +2,7 @@ import express, { Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import validator from 'validator';
 import { validateSignupData } from '../utils/validations';
-import UserModel from '../models/user';
+import UserModel from '../models/userSQL';
 import config from '../config/environment';
 import { SignupData, LoginData } from '../types';
 
@@ -14,16 +14,21 @@ authRouter.post("/signup", async (req: Request, res: Response): Promise<void> =>
     validateSignupData(req);
     const { firstName, lastName, email, password }: SignupData = req.body;
 
-    //Encrypt the password
-    const passwordHash = await bcrypt.hash(password, 10);
+    // Check if user already exists
+    const existingUser = await UserModel.findByEmail(email);
+    if (existingUser) {
+      res.status(400).send("User with this email already exists");
+      return;
+    }
 
-    const user = new UserModel({
+    // Create the user
+    const user = await UserModel.create({
       firstName,
       lastName,
       email,
-      password: passwordHash,
+      password,
     });
-    await user.save();
+
     res.status(200).send({ user: user });
   } catch (error) {
     res.status(400).send("ERROR : " + (error as Error).message);
@@ -37,17 +42,19 @@ authRouter.post("/login", async (req: Request, res: Response): Promise<void> => 
     if (!validator.isEmail(email)) {
       throw new Error("Invalid credentials");
     }
-    const user = await UserModel.findOne({ email });
+    
+    const user = await UserModel.findByEmail(email);
     if (!user) {
       throw new Error("Invalid credentials");
     }
-    const isPasswordMatch = await user.validatePassword(password);
+    
+    const isPasswordMatch = await UserModel.validatePassword(user.id, password);
     if (!isPasswordMatch) {
       res.status(401).send("Invalid credentials");
       return;
     } else {
       // Create JWT token here
-      const token = await user.getJWT();
+      const token = await UserModel.generateJWT(user.id);
       // Add cookie here
       res.cookie("token", token, {
         expires: new Date(Date.now() + config.cookieExpiresHours * 3600000),

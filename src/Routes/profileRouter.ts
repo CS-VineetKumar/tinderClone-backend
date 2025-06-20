@@ -1,7 +1,7 @@
 import express, { Response } from 'express';
 import bcrypt from 'bcrypt';
 import { userAuth } from '../middlewares/auth';
-import UserModel from '../models/user';
+import UserModel from '../models/userSQL';
 import { validateEditProfileData } from '../utils/validations';
 import { AuthenticatedRequest, EditProfileData, PasswordUpdateData } from '../types';
 
@@ -24,19 +24,23 @@ profileRouter.patch("/edit", userAuth, async (req: AuthenticatedRequest, res: Re
     }
     const user = req.user!;
 
-    // Type-safe way to update user properties
+    // Prepare update data
+    const updateData: EditProfileData = {};
     const allowedFields: (keyof EditProfileData)[] = ['firstName', 'lastName', 'gender', 'age', 'about', 'photo', 'skills'];
     allowedFields.forEach((field) => {
       if (req.body[field] !== undefined) {
-        (user as any)[field] = req.body[field];
+        updateData[field] = req.body[field];
       }
     });
     
-    await user.save();
+    const updatedUser = await UserModel.update(user.id, updateData);
+    if (!updatedUser) {
+      throw new Error("Failed to update user");
+    }
 
     res.status(200).send({
-      message: `${user.firstName} updated the profile`,
-      data: user,
+      message: `${updatedUser.firstName} updated the profile`,
+      data: updatedUser,
     });
   } catch (error) {
     res.status(400).send("ERROR :" + (error as Error).message);
@@ -48,15 +52,17 @@ profileRouter.patch("/password", userAuth, async (req: AuthenticatedRequest, res
   try {
     const { oldPassword, newPassword }: PasswordUpdateData = req.body;
     const user = req.user!;
-    const isPasswordMatch = await user.validatePassword(oldPassword);
+    const isPasswordMatch = await UserModel.validatePassword(user.id, oldPassword);
     if (!isPasswordMatch) {
       res.status(401).send("Invalid credentials");
       return;
     } else {
       //Encrypt the password
       const passwordHash = await bcrypt.hash(newPassword, 10);
-      user.password = passwordHash;
-      await user.save();
+      const updatedUser = await UserModel.update(user.id, { password: passwordHash });
+      if (!updatedUser) {
+        throw new Error("Failed to update password");
+      }
       res.clearCookie("token", { expires: new Date(Date.now()) });
       res.status(200).send("Password updated successfully");
     }
@@ -68,8 +74,8 @@ profileRouter.patch("/password", userAuth, async (req: AuthenticatedRequest, res
 // Delete user by ID
 profileRouter.delete("/deleteUser", async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const user = await UserModel.findByIdAndDelete(req.body.userId);
-    if (!user) {
+    const success = await UserModel.delete(req.body.userId);
+    if (!success) {
       res.status(404).send("User not found");
       return;
     } else {

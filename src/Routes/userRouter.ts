@@ -1,7 +1,7 @@
 import express, { Response } from 'express';
 import { userAuth } from '../middlewares/auth';
 import ConnectionRequestModel from '../models/connectionRequest';
-import UserModel from '../models/user';
+import UserModel from '../models/userSQL';
 import { AuthenticatedRequest, IConnectionRequest } from '../types';
 
 const userRouter = express.Router();
@@ -12,7 +12,7 @@ userRouter.get("/feed", userAuth, async (req: AuthenticatedRequest, res: Respons
   try {
     const loggedInUser = req.user!;
     const page = parseInt(req.query.page as string) || 1;
-    let limit = parseInt(req.query.limit as string);
+    let limit = parseInt(req.query.limit as string) || 10;
     limit = limit > 50 ? 50 : limit;
     const skip = (page - 1) * limit;
 
@@ -24,26 +24,19 @@ userRouter.get("/feed", userAuth, async (req: AuthenticatedRequest, res: Respons
 
     // Step 1: Get all userIds involved in connection requests with the current user
     const connectionRequests = await ConnectionRequestModel.find({
-      $or: [{ fromUserId: loggedInUser._id }, { toUserId: loggedInUser._id }],
+      $or: [{ fromUserId: loggedInUser.id }, { toUserId: loggedInUser.id }],
     }).select("fromUserId toUserId");
 
     // Step 2: Extract all userIds to hide (both sender and receiver IDs)
-    const excludedUserIds = new Set([loggedInUser._id.toString()]);
+    const excludedUserIds = [loggedInUser.id];
 
     for (const connectionReq of connectionRequests) {
-      excludedUserIds.add((connectionReq as IConnectionRequest).fromUserId.toString());
-      excludedUserIds.add((connectionReq as IConnectionRequest).toUserId.toString());
+      excludedUserIds.push((connectionReq as IConnectionRequest).fromUserId);
+      excludedUserIds.push((connectionReq as IConnectionRequest).toUserId);
     }
 
-    // Step 3: Query for visible users
-    const users = await UserModel.find({
-      _id: { $nin: Array.from(excludedUserIds) },
-      gender: genderFind,
-    })
-      .select("firstName lastName age photo gender about")
-      .skip(skip)
-      .limit(limit)
-      .lean();
+    // Step 3: Query for visible users using SQL
+    const users = await UserModel.findByGender(genderFind, excludedUserIds, limit, skip);
 
     res.status(200).json(users);
   } catch (error) {
@@ -57,7 +50,7 @@ userRouter.get("/request", userAuth, async (req: AuthenticatedRequest, res: Resp
     const loggedInUser = req.user!;
 
     const connectionRequest = await ConnectionRequestModel.find({
-      toUserId: loggedInUser._id,
+      toUserId: loggedInUser.id,
       status: "interested",
     });
     // .populate("fromUserId",["firstName","lastName"])  string separated by space will also work
@@ -79,8 +72,8 @@ userRouter.get("/connections", userAuth, async (req: AuthenticatedRequest, res: 
 
     const connectionRequest = await ConnectionRequestModel.find({
       $or: [
-        { fromUserId: loggedInUser._id, status: "accepted" },
-        { toUserId: loggedInUser._id, status: "accepted" },
+        { fromUserId: loggedInUser.id, status: "accepted" },
+        { toUserId: loggedInUser.id, status: "accepted" },
       ],
     })
       .populate("fromUserId", USER_SAFE_DATA)

@@ -1,3 +1,9 @@
+/**
+ * @deprecated This MongoDB user model is deprecated. 
+ * Use src/models/userSQL.ts instead for SQL-based user management.
+ * This file will be removed in a future update.
+ */
+
 import mongoose, { Schema, Document } from 'mongoose';
 import validator from 'validator';
 import bcrypt from 'bcrypt';

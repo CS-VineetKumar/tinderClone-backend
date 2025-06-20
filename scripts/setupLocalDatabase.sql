@@ -5,7 +5,7 @@
 CREATE DATABASE IF NOT EXISTS tinderClone_local;
 USE tinderClone_local;
 
--- Create users table
+-- Create users table for authentication
 CREATE TABLE IF NOT EXISTS users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     firstName VARCHAR(255) NOT NULL,
@@ -18,7 +18,9 @@ CREATE TABLE IF NOT EXISTS users (
     photo VARCHAR(500) DEFAULT 'https://www.w3schools.com/howto/img_avatar.png',
     skills JSON,
     createdAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updatedAt TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_email (email),
+    INDEX idx_gender (gender)
 );
 
 -- Create connection_requests table

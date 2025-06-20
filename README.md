@@ -104,7 +104,7 @@ npm run build:prod       # Build for production
 - [ ] Update environment files with credentials
 - [ ] Setup local database: `npm run setup:local-db`
 - [ ] Test server: `npm run dev`
-- [ ] See "MongoDB connected..." and "Server is running on port 2000 in development mode"
+- [ ] See "SQL Database connected..." and "Server is running on port 2000 in development mode"
 
 ### Optional (First Time)
 - [ ] Pull data from RDS: `npm run sync:db:pull`
@@ -154,9 +154,6 @@ cp .env.production.example .env.production
 
 #### Cookie Configuration
 - `COOKIE_EXPIRES_HOURS` - Cookie expiration time in hours (e.g., 8)
-
-#### MongoDB Configuration
-- `MONGODB_URI` - MongoDB connection string (different for each environment)
 
 #### Database Configuration
 
