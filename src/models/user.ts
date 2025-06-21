@@ -12,6 +12,7 @@ const userSchema = new Schema<IUser>(
     },
     lastName: {
       type: String,
+      required: true,
     },
     email: {
       type: String,
@@ -19,7 +20,7 @@ const userSchema = new Schema<IUser>(
       unique: true,
       lowercase: true,
       trim: true,
-      validate(value: string) {
+      validate(value: any) {
         if (!validator.isEmail(value)) {
           throw new Error("Email is invalid: " + value);
         }
@@ -29,37 +30,46 @@ const userSchema = new Schema<IUser>(
       type: String,
       required: true,
     },
-    age: {
-      type: Number,
-      // required: true,
-    },
+    date: {
+    type: Number,
+    required: true,
+  },
+    year: {
+    type: Number,
+    required: true,
+  },
+    month: {
+    type: Number,
+    required: true,
+  },
     gender: {
       type: String,
-      // required: true,
+      required: true,
       enum: {
         values: ["Male", "Female", "Others", "male", "female", "others"],
         message: "{VALUE} is not supported",
       },
-      validate(value) {
+      validate(value: string) {
         if (!["Male", "Female", "Others", "male", "female", "others"].includes(value)) {
           throw new Error("Gender data is invalid");
         }
       },
     },
-    about: {
+    interest: {
       type: String,
-      default: "The default about for the user",
+      required: true,
+      // default: "The default about for the user",
     },
-    photo: {
-      type: String,
-      default: "https://www.w3schools.com/howto/img_avatar.png",
-      validate(value: string) {
-        if (!validator.isURL(value)) {
-          throw new Error("ImageUrl is invalid: " + value);
-        }
-      },
-    },
-    skills: {
+    // photo: {
+    //   type: String,
+    //   default: "https://www.w3schools.com/howto/img_avatar.png",
+    //   validate(value: string) {
+    //     if (!validator.isURL(value)) {
+    //       throw new Error("ImageUrl is invalid: " + value);
+    //     }
+    //   },
+    // },
+    lookingFor: {
       type: [String],
       default: [],
     },

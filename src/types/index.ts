@@ -7,11 +7,13 @@ export interface IUser extends Document {
   lastName?: string;
   email: string;
   password: string;
-  age?: number;
+  date?: number;
+  month?: number;
+  year?: number;
   gender?: 'male' | 'female' | 'others';
-  about?: string;
-  photo?: string;
-  skills?: string[];
+  interest?: string;
+  // photo?: string;
+  lookingFor?: string[];
   getJWT(): Promise<string>;
   validatePassword(passwordInput: string): Promise<boolean>;
   createdAt: Date;
@@ -45,8 +47,12 @@ export interface SignupData {
   lastName?: string;
   email: string;
   password: string;
-  age?: number;
+  month?: number;
+  date?: number;
+  year?: number;
   gender?: 'male' | 'female' | 'others';
+  interest?: 'male' | 'female' | 'everyone';
+  lookingFor?: string[];
 }
 
 export interface LoginData {
